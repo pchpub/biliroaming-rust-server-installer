@@ -363,11 +363,11 @@ fn main() {
         .status()
         .expect("");
     Command::new("mv")
-    .args(["/tmp/BiliRoaming-Rust-Server","/opt/BiliRoaming-Rust-Server/BiliRoaming-Rust-Server"])
+    .args(["/tmp/biliroaming_rust_server","/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
     .status()
     .expect("");
     Command::new("sudo")
-        .args(["chmod", "+x", "/opt/BiliRoaming-Rust-Server/BiliRoaming-Rust-Server"])
+        .args(["chmod", "+x", "/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
         .status()
         .expect("");
     serde_json::to_writer_pretty(
