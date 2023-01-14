@@ -320,14 +320,15 @@ fn main() {
                     .args(["upgrade", "-y"])
                     .status()
                     .expect("");
-                Command::new("sudo apt-get install git cargo screen redis unzip -y")
+                Command::new("apt-get")
+                    .args(["install","redis","unzip","-y"])
                     .status()
                     .expect("");
             }
             "centos" | "fedora" | "rhel" => {
-                Command::new("sudo yum update -y").spawn().expect("");
-                Command::new("sudo yum install git cargo screen redis unzip -y")
-                    .spawn()
+                Command::new("yum").args(["update","-y"]).status().expect("");
+                Command::new("yum").args(["install","redis","unzip","-y"])
+                    .status()
                     .expect("");
             }
             _ => {
@@ -357,16 +358,17 @@ fn main() {
             sync_download(download_url, download_file_path).unwrap();
         }
     }
-    Command::new("sudo mkdir /opt/BiliRoaming-Rust-Server")
-        .spawn()
+    Command::new("mkdir")
+        .arg("/opt/BiliRoaming-Rust-Server")
+        .status()
         .expect("");
-    Command::new(
-        "sudo mv /tmp/BiliRoaming-Rust-Server /opt/BiliRoaming-Rust-Server/BiliRoaming-Rust-Server",
-    )
-    .spawn()
+    Command::new("mv")
+    .args(["/tmp/BiliRoaming-Rust-Server","/opt/BiliRoaming-Rust-Server/BiliRoaming-Rust-Server"])
+    .status()
     .expect("");
-    Command::new("sudo chmod +x /opt/BiliRoaming-Rust-Server/BiliRoaming-Rust-Server")
-        .spawn()
+    Command::new("sudo")
+        .args(["chmod", "+x", "/opt/BiliRoaming-Rust-Server/BiliRoaming-Rust-Server"])
+        .status()
         .expect("");
     serde_json::to_writer_pretty(
         File::create("/opt/BiliRoaming-Rust-Server/config.json").unwrap(),
@@ -392,10 +394,11 @@ fn main() {
             let download_file_path = format!("/tmp/{}", download_file_name);
             sync_download(download_url, download_file_path).unwrap();
         }
-        Command::new("sudo mkdir /opt/bili-sub-filter")
-            .spawn()
+        Command::new("mkdir")
+            .args(["-p", "/opt/bili-sub-filter"])
+            .status()
             .expect("");
-        Command::new("unzip -C /tmp/bili-sub-filter.zip -d /opt/bili-sub-filter/").spawn().expect("");
+        Command::new("unzip").args(["-C","/tmp/bili-sub-filter.zip","-d","/opt/bili-sub-filter/"]).status().expect("");
         let mut bili_sub_filter_config: serde_json::Value = serde_json::from_reader(File::open("/opt/bili-sub-filter/config.json").unwrap()).unwrap();
         for sub in subscription_links {
             bili_sub_filter_config["subs"].as_array_mut().unwrap().push(serde_json::Value::String(sub));
@@ -428,12 +431,12 @@ ExecStart=/opt/BiliRoaming-Rust-Server/biliroaming_rust_server
 Restart=always
 ExecStop=/usr/bin/kill -2 $MAINPID
 StandardOutput=file:/opt/BiliRoaming-Rust-Server/biliroaming_rust_server.log"#.as_bytes()).unwrap();
-    Command::new("sudo systemctl daemon-reload").spawn().expect("");
-    Command::new("sudo systemctl enable biliroaming_rust_server").spawn().expect("");
-    Command::new("sudo systemctl start biliroaming_rust_server").spawn().expect("");
+    Command::new("systemctl").arg("daemon-reload").status().expect("");
+    Command::new("systemctl").arg("enable biliroaming_rust_server").status().expect("");
+    Command::new("systemctl").args(["start","biliroaming_rust_server"]).status().expect("");
     if use_auto_proxy {
-        Command::new("sudo systemctl enable bili-sub-filter").spawn().expect("");
-        Command::new("sudo systemctl start bili-sub-filter").spawn().expect("");
+        Command::new("systemctl").arg("enable bili-sub-filter").status().expect("");
+        Command::new("systemctl").args(["start","bili-sub-filter"]).status().expect("");
     }
     println!("BiliRoaming Rust Server installed successfully.");
     println!("{}http://127.0.0.1:{}",LangSentence::ReverseProxy.get_sentence(&lang),bili_config.port);
