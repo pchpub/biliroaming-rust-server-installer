@@ -60,13 +60,13 @@ pub fn sync_getwebpage(
 // download
 
 struct PartialRangeIter {
-  start: u64,
-  end: u64,
+  start: u128,
+  end: u128,
   buffer_size: u128,
 }
 
 impl PartialRangeIter {
-  pub fn new(start: u64, end: u64, buffer_size: u128) -> Result<Self,&'static str> {
+  pub fn new(start: u128, end: u128, buffer_size: u128) -> Result<Self,&'static str> {
     if buffer_size == 0 {
       return Err("invalid buffer_size, give a value greater than zero.");
     }
@@ -85,7 +85,7 @@ impl Iterator for PartialRangeIter {
       None
     } else {
       let prev_start = self.start;
-      self.start += std::cmp::min(self.buffer_size as u64, self.end - self.start + 1);
+      self.start += std::cmp::min(self.buffer_size, self.end - self.start + 1);
       Some(HeaderValue::from_str(&format!("bytes={}-{}", prev_start, self.start - 1)).expect("string provided by format!"))
     }
   }
@@ -104,7 +104,7 @@ pub fn sync_download<P: AsRef<Path>>(url: &str,path: P) -> Result<(), ()> {
     .headers()
     .get(CONTENT_LENGTH)
     .ok_or("response doesn't include the content length").unwrap();
-  let length = u64::from_str(length.to_str().unwrap()).map_err(|_| "invalid Content-Length header").unwrap();
+  let length = u128::from_str(length.to_str().unwrap()).map_err(|_| "invalid Content-Length header").unwrap();
   let mut output_file = File::create(path.as_ref()).unwrap();
   println!("starting download {}...",path.as_ref().to_str().unwrap());
   print!("\n");
