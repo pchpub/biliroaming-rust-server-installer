@@ -312,11 +312,16 @@ fn main() {
     if let Ok(id) = env::var("ID") {
         match &id[..] {
             "debian" | "ubuntu" | "devuan" => {
-                Command::new("sudo apt update && sudo apt upgrade -y")
-                    .spawn()
+                Command::new("apt")
+                    .args(["update"])
+                    .status()
+                    .expect("");
+                Command::new("apt")
+                    .args(["upgrade", "-y"])
+                    .status()
                     .expect("");
                 Command::new("sudo apt-get install git cargo screen redis unzip -y")
-                    .spawn()
+                    .status()
                     .expect("");
             }
             "centos" | "fedora" | "rhel" => {
