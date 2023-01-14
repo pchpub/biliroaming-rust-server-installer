@@ -308,7 +308,7 @@ fn main() {
         "",
     );
 
-    dotenv::from_path("/etc/os-release").ok();
+    dotenv::from_path("/etc/os-release").unwrap();
     if let Ok(id) = env::var("ID") {
         match &id[..] {
             "debian" | "ubuntu" | "devuan" => {
