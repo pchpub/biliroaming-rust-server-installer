@@ -142,8 +142,8 @@ impl BiliConfig {
             cn_proxy_accesskey_open: false,
             th_proxy_subtitle_url: "".to_owned(),
             th_proxy_subtitle_open: false,
-            general_api_bilibili_com_proxy_api: "".to_owned(),
-            general_app_bilibili_com_proxy_api: "".to_owned(),
+            general_api_bilibili_com_proxy_api: "api.bilibili.com".to_owned(),
+            general_app_bilibili_com_proxy_api: "app.bilibili.com".to_owned(),
             aid: 0,
             aid_replace_open: false,
             resign_pub: HashMap::from([
