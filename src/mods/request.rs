@@ -62,11 +62,11 @@ pub fn sync_getwebpage(
 struct PartialRangeIter {
   start: u64,
   end: u64,
-  buffer_size: u32,
+  buffer_size: u128,
 }
 
 impl PartialRangeIter {
-  pub fn new(start: u64, end: u64, buffer_size: u32) -> Result<Self,&'static str> {
+  pub fn new(start: u64, end: u64, buffer_size: u128) -> Result<Self,&'static str> {
     if buffer_size == 0 {
       return Err("invalid buffer_size, give a value greater than zero.");
     }
