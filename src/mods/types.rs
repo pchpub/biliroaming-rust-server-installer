@@ -91,6 +91,7 @@ impl BiliConfig {
         Self {
             config_version: 3,
             redis: "".to_owned(),
+            #[serde(rename = "woker_num")] // 等更新后删掉
             worker_num: 4,
             port: 0,
             limit_biliroaming_version_open: false,
