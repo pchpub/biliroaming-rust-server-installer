@@ -433,7 +433,7 @@ Restart=always
 ExecStop=/usr/bin/kill -2 $MAINPID
 StandardOutput=file:/opt/BiliRoaming-Rust-Server/biliroaming_rust_server.log"#.as_bytes()).unwrap();
     Command::new("systemctl").arg("daemon-reload").status().expect("");
-    Command::new("systemctl").arg("enable biliroaming_rust_server").status().expect("");
+    Command::new("systemctl").args(["enable","biliroaming_rust_server"]).status().expect("");
     Command::new("systemctl").args(["start","biliroaming_rust_server"]).status().expect("");
     if use_auto_proxy {
         Command::new("systemctl").arg("enable bili-sub-filter").status().expect("");
