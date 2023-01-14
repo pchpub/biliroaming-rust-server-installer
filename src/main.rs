@@ -400,6 +400,7 @@ fn main() {
             .expect("");
         Command::new("unzip").args(["-C","/tmp/bili-sub-filter.zip","-d","/opt/bili-sub-filter/"]).status().expect("");
         let mut bili_sub_filter_config: serde_json::Value = serde_json::from_reader(File::open("/opt/bili-sub-filter/config.json").unwrap()).unwrap();
+        bili_sub_filter_config["subs"].as_array_mut().unwrap().clear();
         for sub in subscription_links {
             bili_sub_filter_config["subs"].as_array_mut().unwrap().push(serde_json::Value::String(sub));
         }
