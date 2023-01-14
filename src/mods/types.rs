@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct BiliConfig {
     pub config_version: u16,
     pub redis: String,
+    #[serde(rename = "woker_num")] // 等更新后删掉
     pub worker_num: usize,
     pub port: u16,
     pub limit_biliroaming_version_open: bool,
@@ -91,7 +92,6 @@ impl BiliConfig {
         Self {
             config_version: 3,
             redis: "".to_owned(),
-            #[serde(rename = "woker_num")] // 等更新后删掉
             worker_num: 4,
             port: 0,
             limit_biliroaming_version_open: false,
