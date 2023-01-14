@@ -92,7 +92,7 @@ impl Iterator for PartialRangeIter {
 }
 
 pub fn sync_download<P: AsRef<Path>>(url: &str,path: P) -> Result<(), ()> {
-  const CHUNK_SIZE: u32 = 1024*1024*8;
+  const CHUNK_SIZE: u128 = 1024*1024*8;
     
   let client = reqwest::blocking::Client::new();
   let response = if let Ok(value) = client.head(url).send(){
