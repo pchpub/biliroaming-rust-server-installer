@@ -436,7 +436,7 @@ StandardOutput=file:/opt/BiliRoaming-Rust-Server/biliroaming_rust_server.log"#.a
     Command::new("systemctl").args(["enable","biliroaming_rust_server"]).status().expect("");
     Command::new("systemctl").args(["start","biliroaming_rust_server"]).status().expect("");
     if use_auto_proxy {
-        Command::new("systemctl").arg("enable bili-sub-filter").status().expect("");
+        Command::new("systemctl").args(["enable","bili-sub-filter"]).status().expect("");
         Command::new("systemctl").args(["start","bili-sub-filter"]).status().expect("");
     }
     println!("BiliRoaming Rust Server installed successfully.");
