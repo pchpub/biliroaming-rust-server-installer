@@ -268,20 +268,30 @@ fn main() {
             1 => {
                 bili_config.cn_proxy_playurl_open = false;
                 bili_config.cn_proxy_search_open = false;
+                bili_config.cn_proxy_playurl_url = "".to_owned();
+                bili_config.cn_proxy_search_url = "".to_owned();
             }
             2 => {
                 bili_config.hk_proxy_playurl_open = false;
                 bili_config.hk_proxy_search_open = false;
+                bili_config.hk_proxy_playurl_url = "".to_owned();
+                bili_config.hk_proxy_search_url = "".to_owned();
             }
             3 => {
                 bili_config.tw_proxy_playurl_open = false;
                 bili_config.tw_proxy_search_open = false;
+                bili_config.tw_proxy_playurl_url = "".to_owned();
+                bili_config.tw_proxy_search_url = "".to_owned();
             }
             4 => {
                 bili_config.th_proxy_playurl_open = false;
                 bili_config.th_proxy_search_open = false;
                 bili_config.th_proxy_token_open = false;
                 bili_config.th_proxy_subtitle_open = false;
+                bili_config.th_proxy_playurl_url = "".to_owned();
+                bili_config.th_proxy_search_url = "".to_owned();
+                bili_config.th_proxy_token_url = "".to_owned();
+                bili_config.th_proxy_subtitle_url = "".to_owned();
             }
             _ => panic!("unknown area"),
         }
@@ -366,8 +376,8 @@ fn main() {
     .args(["/tmp/biliroaming_rust_server","/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
     .status()
     .expect("");
-    Command::new("sudo")
-        .args(["chmod", "+x", "/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
+    Command::new("chmod")
+        .args(["+x", "/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
         .status()
         .expect("");
     serde_json::to_writer_pretty(
@@ -377,7 +387,7 @@ fn main() {
     .unwrap();
     if use_auto_proxy {
         let latest_server_info = if let Ok(value) = sync_getwebpage(
-            "https://api.github.com/repos/pchpub/bili-sub-filter/releases/latest",
+            "https://api.github.com/repos/pchpub/biliroaming-rust-server-sub-filter/releases/latest",
             "BiliRoaming-Rust-Server-Installer",
             "",
             None,
@@ -399,6 +409,18 @@ fn main() {
             .status()
             .expect("");
         Command::new("unzip").args(["-C","/tmp/bili-sub-filter.zip","-d","/opt/bili-sub-filter/"]).status().expect("");
+        Command::new("chmod")
+            .args(["+x", "/opt/bili-sub-filter/bili-sub-filter"])
+            .status()
+            .expect("");
+        Command::new("chmod")
+            .args(["+x", "/opt/bili-sub-filter/clash/clash"])
+            .status()
+            .expect("");
+        Command::new("mkdir")
+            .args(["-p", "/opt/bili-sub-filter/output"])
+            .status()
+            .expect("");
         let mut bili_sub_filter_config: serde_json::Value = serde_json::from_reader(File::open("/opt/bili-sub-filter/config.json").unwrap()).unwrap();
         bili_sub_filter_config["subs"].as_array_mut().unwrap().clear();
         for sub in subscription_links {
