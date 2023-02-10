@@ -427,9 +427,9 @@ impl LangSentence {
                 Self::True => "是",
                 Self::False => "否",
                 Self::ReverseProxy => "服务器已经开启, 请反代: ",
-                Self::UseAutoHttps => "是否使用自动HTTPS",
+                Self::UseAutoHttps => "是否使用自动HTTPS\n注意: 请确保80端口和443没有被占用\n此项为true时会覆写https_port和http_port\n此项为true时不用安装nginx",
                 Self::EnterWebSiteName => "请输入网站域名",
-                Self::ChooseHttpsPort => "请输入HTTPS端口号\n注意: 请确保80端口和443没有被占用\n此项为true时会覆写https_port和http_port\n此项为true时不用安装nginx",
+                Self::ChooseHttpsPort => "请输入HTTPS端口号",
                 Self::MassageAfterInstallHttpOnly => "安装完成, 请反代: ",
                 Self::MassageAfterInstallHttps => "安装完成, 您的解析服务器地址为: ",
             },
@@ -481,12 +481,36 @@ impl LangSentence {
                 Self::True => "Yes",
                 Self::False => "No",
                 Self::ReverseProxy => "The server has been started, please reverse proxy: ",
-                Self::UseAutoHttps => "Use automatic HTTPS",
+                Self::UseAutoHttps => "Use automatic HTTPS\nNote: Please make sure that port 80 and 443 are not occupied\nThis item will overwrite https_port and http_port when true\nThis item does not need to install nginx when true",
                 Self::EnterWebSiteName => "Please enter the website domain name",
-                Self::ChooseHttpsPort => "Please enter the HTTPS port number\nNote: Please make sure that port 80 and 443 are not occupied\nThis item will overwrite https_port and http_port when true\nThis item does not need to install nginx when true",
+                Self::ChooseHttpsPort => "Please enter the HTTPS port number",
                 Self::MassageAfterInstallHttpOnly => "Installation is complete, please reverse proxy: ",
                 Self::MassageAfterInstallHttps => "Installation is complete, your server address is: ",
             },
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ErrorCode {
+    Empty,
+    Invalid,
+}
+
+impl std::error::Error for ErrorCode {
+    fn description(&self) -> &str {
+        match self {
+            Self::Empty => "Empty",
+            Self::Invalid => "Invalid",
+        }
+    }
+}
+
+impl std::fmt::Display for ErrorCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Empty => write!(f, "Empty"),
+            Self::Invalid => write!(f, "Invalid"),
         }
     }
 }
