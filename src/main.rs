@@ -169,6 +169,7 @@ fn main() {
     let website_name: String;
     if auto_https == 1 {
         bili_config.http2https_support = true;
+        bili_config.https_support = true;
         bili_config.http_port = 80;
         bili_config.https_port = 443;
         website_name = loop {
