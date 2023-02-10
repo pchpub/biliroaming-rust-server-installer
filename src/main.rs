@@ -1,17 +1,21 @@
 use biliroaming_rust_server_installer::mods::{
+    acme::apply_cert,
     build_box::{build_input_box, build_selected_option_box},
     request::{sync_download, sync_getwebpage},
     types::{BiliConfig, Lang, LangSentence},
 };
 use dotenv;
-use std::{process::Command, io::Write};
 use std::{env, fs::File};
+use std::{io::Write, process::Command};
 
 fn main() {
     println!("Hello, welcome to Biliroaming-Rust-Server-Installer!");
     println!("This is a installer for Biliroaming-Rust-Server.");
     println!("This installer will help you to install Biliroaming-Rust-Server.");
     println!("This installer will help you to configure Biliroaming-Rust-Server.");
+
+    println!("Warning: It is a pre-release version of Biliroaming-Rust-Server-Installer, so it may not work well.");
+
     let mut lang = Lang::EnUs;
     match build_selected_option_box(
         &Lang::EnUs,
@@ -35,13 +39,20 @@ fn main() {
             "6379"
         )
     );
-    bili_config.port = build_input_box(
+    bili_config.http_port = build_input_box(
         &lang,
         LangSentence::ChooseHttpPort.get_sentence(&lang),
         "2662",
     )
     .parse::<u16>()
     .unwrap_or(2662);
+    bili_config.https_port = build_input_box(
+        &lang,
+        LangSentence::ChooseHttpsPort.get_sentence(&lang),
+        "2663",
+    )
+    .parse::<u16>()
+    .unwrap_or(2663);
     bili_config.worker_num = build_input_box(
         &lang,
         LangSentence::ChooseWorkerNum.get_sentence(&lang),
@@ -151,6 +162,34 @@ fn main() {
         LangSentence::ChooseThWebSearchApi.get_sentence(&lang),
         "https://app.biliintl.com/intl/gateway/v2/app/search/type",
     );
+
+    // acme.sh
+    let auto_https =
+        build_selected_option_box(&lang, LangSentence::UseAutoHttps.get_sentence(&lang), &vec!["true".to_owned(), "false".to_owned()]);
+    let website_name: String;
+    if auto_https == 1 {
+        bili_config.http2https_support = true;
+        bili_config.http_port = 80;
+        bili_config.https_port = 443;
+        website_name = loop {
+            let temp = build_input_box(
+                &lang,
+                LangSentence::EnterWebSiteName.get_sentence(&lang),
+                "",
+            );
+            if !temp.is_empty() {
+                break temp;
+            }
+        };
+        apply_cert(
+            &"/opt/BiliRoaming-Rust-Server/certificates/fullchain.pem".to_owned(),
+            &"/opt/BiliRoaming-Rust-Server/certificates/privkey.pem".to_owned(),
+            &website_name,
+        ).expect("Install certificate failed!");
+    }else{
+        website_name = String::new();
+    }
+
     // UseAutoProxy,
     let mut use_auto_proxy = build_input_box(
         &lang,
@@ -159,6 +198,7 @@ fn main() {
     )
     .parse::<bool>()
     .unwrap_or(true);
+
     let mut subscription_links = Vec::new();
     // EnterSubscriptionLink,
     if use_auto_proxy {
@@ -322,22 +362,23 @@ fn main() {
     if let Ok(id) = env::var("ID") {
         match &id[..] {
             "debian" | "ubuntu" | "devuan" => {
-                Command::new("apt")
-                    .args(["update"])
-                    .status()
-                    .expect("");
+                Command::new("apt").args(["update"]).status().expect("");
                 Command::new("apt")
                     .args(["upgrade", "-y"])
                     .status()
                     .expect("");
                 Command::new("apt-get")
-                    .args(["install","redis","unzip","-y"])
+                    .args(["install", "redis", "unzip", "-y"])
                     .status()
                     .expect("");
             }
             "centos" | "fedora" | "rhel" => {
-                Command::new("yum").args(["update","-y"]).status().expect("");
-                Command::new("yum").args(["install","redis","unzip","-y"])
+                Command::new("yum")
+                    .args(["update", "-y"])
+                    .status()
+                    .expect("");
+                Command::new("yum")
+                    .args(["install", "redis", "unzip", "-y"])
                     .status()
                     .expect("");
             }
@@ -350,7 +391,7 @@ fn main() {
     }
     {
         let latest_server_info = if let Ok(value) = sync_getwebpage(
-            "https://api.github.com/repos/pchpub/BiliRoaming-Rust-Server/releases/latest",
+            "https://api.github.com/repos/pchpub/BiliRoaming-Rust-Server/releases/tags/alpha-releases",
             "BiliRoaming-Rust-Server-Installer",
             "",
             None,
@@ -373,9 +414,12 @@ fn main() {
         .status()
         .expect("");
     Command::new("mv")
-    .args(["/tmp/biliroaming_rust_server","/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
-    .status()
-    .expect("");
+        .args([
+            "/tmp/biliroaming_rust_server",
+            "/opt/BiliRoaming-Rust-Server/biliroaming_rust_server",
+        ])
+        .status()
+        .expect("");
     Command::new("chmod")
         .args(["+x", "/opt/BiliRoaming-Rust-Server/biliroaming_rust_server"])
         .status()
@@ -408,7 +452,15 @@ fn main() {
             .args(["-p", "/opt/bili-sub-filter"])
             .status()
             .expect("");
-        Command::new("unzip").args(["-C","/tmp/bili-sub-filter.zip","-d","/opt/bili-sub-filter/"]).status().expect("");
+        Command::new("unzip")
+            .args([
+                "-C",
+                "/tmp/bili-sub-filter.zip",
+                "-d",
+                "/opt/bili-sub-filter/",
+            ])
+            .status()
+            .expect("");
         Command::new("chmod")
             .args(["+x", "/opt/bili-sub-filter/bili-sub-filter"])
             .status()
@@ -421,14 +473,28 @@ fn main() {
             .args(["-p", "/opt/bili-sub-filter/output"])
             .status()
             .expect("");
-        let mut bili_sub_filter_config: serde_json::Value = serde_json::from_reader(File::open("/opt/bili-sub-filter/config.json").unwrap()).unwrap();
-        bili_sub_filter_config["subs"].as_array_mut().unwrap().clear();
+        let mut bili_sub_filter_config: serde_json::Value =
+            serde_json::from_reader(File::open("/opt/bili-sub-filter/config.json").unwrap())
+                .unwrap();
+        bili_sub_filter_config["subs"]
+            .as_array_mut()
+            .unwrap()
+            .clear();
         for sub in subscription_links {
-            bili_sub_filter_config["subs"].as_array_mut().unwrap().push(serde_json::Value::String(sub));
+            bili_sub_filter_config["subs"]
+                .as_array_mut()
+                .unwrap()
+                .push(serde_json::Value::String(sub));
         }
-        serde_json::to_writer_pretty(File::create("/opt/bili-sub-filter/config.json").unwrap(), &bili_sub_filter_config).unwrap();
-        let mut file = std::fs::File::create("/etc/systemd/system/bili-sub-filter.service").expect("create failed");
-        file.write_all(r#"[Unit]
+        serde_json::to_writer_pretty(
+            File::create("/opt/bili-sub-filter/config.json").unwrap(),
+            &bili_sub_filter_config,
+        )
+        .unwrap();
+        let mut file = std::fs::File::create("/etc/systemd/system/bili-sub-filter.service")
+            .expect("create failed");
+        file.write_all(
+            r#"[Unit]
 Description=Bili Sub Filter
 After=network.target
 [Install]
@@ -439,10 +505,15 @@ WorkingDirectory=/opt/bili-sub-filter
 ExecStart=/opt/bili-sub-filter/bili-sub-filter
 Restart=always
 ExecStop=/usr/bin/kill -2 $MAINPID
-StandardOutput=file:/opt/bili-sub-filter/bili-sub-filter.log"#.as_bytes()).unwrap();
+StandardOutput=file:/opt/bili-sub-filter/bili-sub-filter.log"#
+                .as_bytes(),
+        )
+        .unwrap();
     }
-    let mut file = std::fs::File::create("/etc/systemd/system/biliroaming_rust_server.service").expect("create failed");
-        file.write_all(r#"[Unit]
+    let mut file = std::fs::File::create("/etc/systemd/system/biliroaming_rust_server.service")
+        .expect("create failed");
+    file.write_all(
+        r#"[Unit]
 Description=Biliroaming Rust Server
 After=network.target
 [Install]
@@ -453,14 +524,39 @@ WorkingDirectory=/opt/BiliRoaming-Rust-Server
 ExecStart=/opt/BiliRoaming-Rust-Server/biliroaming_rust_server
 Restart=always
 ExecStop=/usr/bin/kill -2 $MAINPID
-StandardOutput=file:/opt/BiliRoaming-Rust-Server/biliroaming_rust_server.log"#.as_bytes()).unwrap();
-    Command::new("systemctl").arg("daemon-reload").status().expect("");
-    Command::new("systemctl").args(["enable","biliroaming_rust_server"]).status().expect("");
-    Command::new("systemctl").args(["start","biliroaming_rust_server"]).status().expect("");
+StandardOutput=file:/opt/BiliRoaming-Rust-Server/biliroaming_rust_server.log"#
+            .as_bytes(),
+    )
+    .unwrap();
+    Command::new("systemctl")
+        .arg("daemon-reload")
+        .status()
+        .expect("");
+    Command::new("systemctl")
+        .args(["enable", "biliroaming_rust_server"])
+        .status()
+        .expect("");
+    Command::new("systemctl")
+        .args(["start", "biliroaming_rust_server"])
+        .status()
+        .expect("");
     if use_auto_proxy {
-        Command::new("systemctl").args(["enable","bili-sub-filter"]).status().expect("");
-        Command::new("systemctl").args(["start","bili-sub-filter"]).status().expect("");
+        Command::new("systemctl")
+            .args(["enable", "bili-sub-filter"])
+            .status()
+            .expect("");
+        Command::new("systemctl")
+            .args(["start", "bili-sub-filter"])
+            .status()
+            .expect("");
     }
-    println!("BiliRoaming Rust Server installed successfully.");
-    println!("{}http://127.0.0.1:{}",LangSentence::ReverseProxy.get_sentence(&lang),bili_config.port);
+    if bili_config.https_support {
+        println!("{}{}",LangSentence::MassageAfterInstallHttps.get_sentence(&lang),website_name);
+    }else{
+        println!(
+            "{}http://127.0.0.1:{}",
+            LangSentence::MassageAfterInstallHttpOnly.get_sentence(&lang),
+            bili_config.http_port
+        );
+    }
 }
