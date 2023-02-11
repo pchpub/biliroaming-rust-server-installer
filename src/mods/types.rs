@@ -6,9 +6,11 @@ use serde::{Deserialize, Serialize};
 pub struct BiliConfig {
     pub config_version: u16,
     pub redis: String,
-    #[serde(rename = "woker_num")] // 等更新后删掉
     pub worker_num: usize,
-    pub port: u16,
+    pub http_port: u16,
+    pub https_port: u16,
+    pub https_support: bool,
+    pub http2https_support: bool,
     pub limit_biliroaming_version_open: bool,
     pub limit_biliroaming_version_min: u16,
     pub limit_biliroaming_version_max: u16,
@@ -90,10 +92,13 @@ pub struct BiliConfig {
 impl BiliConfig {
     pub fn new() -> Self {
         Self {
-            config_version: 3,
+            config_version: 4,
             redis: "".to_owned(),
             worker_num: 4,
-            port: 0,
+            http_port: 0,
+            https_port: 0,
+            https_support: false,
+            http2https_support: false,
             limit_biliroaming_version_open: false,
             limit_biliroaming_version_min: 0,
             limit_biliroaming_version_max: 32767,
@@ -148,43 +153,43 @@ impl BiliConfig {
             aid: 0,
             aid_replace_open: false,
             resign_pub: HashMap::from([
-                ("1".to_owned(),false),
-                ("2".to_owned(),false),
-                ("3".to_owned(),false),
-                ("4".to_owned(),false),
+                ("1".to_owned(), false),
+                ("2".to_owned(), false),
+                ("3".to_owned(), false),
+                ("4".to_owned(), false),
             ]),
             resign_open: HashMap::from([
-                ("1".to_owned(),false),
-                ("2".to_owned(),false),
-                ("3".to_owned(),false),
-                ("4".to_owned(),false),
+                ("1".to_owned(), false),
+                ("2".to_owned(), false),
+                ("3".to_owned(), false),
+                ("4".to_owned(), false),
             ]),
             resign_from_existed_key: false,
             resign_from_api_open: HashMap::from([
-                ("1".to_owned(),false),
-                ("2".to_owned(),false),
-                ("3".to_owned(),false),
-                ("4".to_owned(),false),
+                ("1".to_owned(), false),
+                ("2".to_owned(), false),
+                ("3".to_owned(), false),
+                ("4".to_owned(), false),
             ]),
             resign_api: HashMap::from([
-                ("1".to_owned(),"".to_owned()),
-                ("2".to_owned(),"".to_owned()),
-                ("3".to_owned(),"".to_owned()),
-                ("4".to_owned(),"".to_owned()),
+                ("1".to_owned(), "".to_owned()),
+                ("2".to_owned(), "".to_owned()),
+                ("3".to_owned(), "".to_owned()),
+                ("4".to_owned(), "".to_owned()),
             ]),
             resign_api_sign: HashMap::from([
-                ("1".to_owned(),"".to_owned()),
-                ("2".to_owned(),"".to_owned()),
-                ("3".to_owned(),"".to_owned()),
-                ("4".to_owned(),"".to_owned()),
+                ("1".to_owned(), "".to_owned()),
+                ("2".to_owned(), "".to_owned()),
+                ("3".to_owned(), "".to_owned()),
+                ("4".to_owned(), "".to_owned()),
             ]),
             cache: HashMap::from([
-                ("0".to_owned(),6480),
-                ("-412".to_owned(),1380),
-                ("other".to_owned(),1380),
-                ("-404".to_owned(),1380),
-                ("-10403".to_owned(),6480),
-                ("thsub".to_owned(),14400),
+                ("0".to_owned(), 6480),
+                ("-412".to_owned(), 1380),
+                ("other".to_owned(), 1380),
+                ("-404".to_owned(), 1380),
+                ("-10403".to_owned(), 6480),
+                ("thsub".to_owned(), 14400),
             ]),
             local_wblist: HashMap::new(),
             blacklist_config: BlackListType::MixedBlackList(OnlineBlackListConfig {
@@ -195,10 +200,10 @@ impl BiliConfig {
             websearch_remake: HashMap::new(),
             donate_url: "".to_owned(),
             api_assesskey_open: HashMap::from([
-                ("1".to_owned(),false),
-                ("2".to_owned(),false),
-                ("3".to_owned(),false),
-                ("4".to_owned(),false),
+                ("1".to_owned(), false),
+                ("2".to_owned(), false),
+                ("3".to_owned(), false),
+                ("4".to_owned(), false),
             ]),
             report_open: false,
             report_config: ReportConfig::default(),
@@ -368,6 +373,11 @@ pub enum LangSentence {
     True,
     False,
     ReverseProxy,
+    UseAutoHttps,
+    EnterWebSiteName,
+    ChooseHttpsPort,
+    MassageAfterInstallHttpOnly,
+    MassageAfterInstallHttps,
 }
 
 impl LangSentence {
@@ -417,6 +427,11 @@ impl LangSentence {
                 Self::True => "是",
                 Self::False => "否",
                 Self::ReverseProxy => "服务器已经开启, 请反代: ",
+                Self::UseAutoHttps => "是否使用自动HTTPS\n注意: 请确保80端口和443没有被占用\n此项为true时会覆写https_port和http_port\n此项为true时不用安装nginx",
+                Self::EnterWebSiteName => "请输入网站域名",
+                Self::ChooseHttpsPort => "请输入HTTPS端口号",
+                Self::MassageAfterInstallHttpOnly => "安装完成, 请反代: ",
+                Self::MassageAfterInstallHttps => "安装完成, 您的解析服务器地址为: ",
             },
             Lang::EnUs => match self {
                 Self::ChooseRedisPort => "Please enter the Redis port number",
@@ -424,7 +439,9 @@ impl LangSentence {
                 Self::ChooseWorkerNum => "Please enter the number of working threads",
                 Self::ChooseLimitBiliroamingVersionOpen => "Limit BiliRoaming version",
                 Self::ChooseCnAppPlayurlApi => "Please enter the Chinese App playback address API",
-                Self::ChooseHkAppPlayurlApi => "Please enter the Hong Kong App playback address API",
+                Self::ChooseHkAppPlayurlApi => {
+                    "Please enter the Hong Kong App playback address API"
+                }
                 Self::ChooseTwAppPlayurlApi => "Please enter the Taiwan App playback address API",
                 Self::ChooseThAppPlayurlApi => "Please enter the Thai App playback address API",
                 Self::ChooseCnAppSearchApi => "Please enter the Chinese App search API",
@@ -433,7 +450,9 @@ impl LangSentence {
                 Self::ChooseThAppSearchApi => "Please enter the Thai App search API",
                 Self::ChooseThAppSeasonApi => "Please enter the Thai App season API",
                 Self::ChooseCnWebPlayurlApi => "Please enter the Chinese Web playback address API",
-                Self::ChooseHkWebPlayurlApi => "Please enter the Hong Kong Web playback address API",
+                Self::ChooseHkWebPlayurlApi => {
+                    "Please enter the Hong Kong Web playback address API"
+                }
                 Self::ChooseTwWebPlayurlApi => "Please enter the Taiwan Web playback address API",
                 Self::ChooseThWebPlayurlApi => "Please enter the Thai Web playback address API",
                 Self::ChooseCnWebSearchApi => "Please enter the Chinese Web search API",
@@ -462,7 +481,36 @@ impl LangSentence {
                 Self::True => "Yes",
                 Self::False => "No",
                 Self::ReverseProxy => "The server has been started, please reverse proxy: ",
+                Self::UseAutoHttps => "Use automatic HTTPS\nNote: Please make sure that port 80 and 443 are not occupied\nThis item will overwrite https_port and http_port when true\nThis item does not need to install nginx when true",
+                Self::EnterWebSiteName => "Please enter the website domain name",
+                Self::ChooseHttpsPort => "Please enter the HTTPS port number",
+                Self::MassageAfterInstallHttpOnly => "Installation is complete, please reverse proxy: ",
+                Self::MassageAfterInstallHttps => "Installation is complete, your server address is: ",
             },
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ErrorCode {
+    Empty,
+    Invalid,
+}
+
+impl std::error::Error for ErrorCode {
+    fn description(&self) -> &str {
+        match self {
+            Self::Empty => "Empty",
+            Self::Invalid => "Invalid",
+        }
+    }
+}
+
+impl std::fmt::Display for ErrorCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Empty => write!(f, "Empty"),
+            Self::Invalid => write!(f, "Invalid"),
         }
     }
 }
