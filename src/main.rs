@@ -283,6 +283,7 @@ fn main() {
                 "HK".to_string(),
                 "TW".to_string(),
                 "TH".to_string(),
+                "Other".to_string(),
             ],
         );
         bili_config.cn_proxy_playurl_open = true;
@@ -334,7 +335,7 @@ fn main() {
                 bili_config.th_proxy_token_url = "".to_owned();
                 bili_config.th_proxy_subtitle_url = "".to_owned();
             }
-            _ => panic!("unknown area"),
+            _ => (),
         }
     };
     bili_config.aid_replace_open = build_selected_option_box(
@@ -477,6 +478,7 @@ fn main() {
         let mut bili_sub_filter_config: serde_json::Value =
             serde_json::from_reader(File::open("/opt/bili-sub-filter/config.json").unwrap())
                 .unwrap();
+        bili_sub_filter_config["auto_mode"] = serde_json::Value::Bool(true);
         bili_sub_filter_config["subs"]
             .as_array_mut()
             .unwrap()
