@@ -16,8 +16,8 @@ where
     if Path::new(key_path).exists() {
         Command::new("rm").arg(key_path).status()?;
     }
-    fs::create_dir_all("/opt/BiliRoaming-Rust-Server/web").unwrap_or_default();
-    fs::create_dir_all("/opt/BiliRoaming-Rust-Server/certificates").unwrap_or_default();
+    fs::create_dir_all("/opt/BiliRoaming-Rust-Server/web/").unwrap_or_default();
+    fs::create_dir_all("/opt/BiliRoaming-Rust-Server/certificates/").unwrap_or_default();
     Command::new("bash")
         .arg("-c")
         .arg("curl https://get.acme.sh | sh")
